@@ -1,0 +1,56 @@
+﻿# Must create a subnet called GatewaySubnet for the gateway to connect to prior to creating the gateway
+ 
+$vnetname = "hopeundsvne001"
+ 
+$rgname = "hopeundsrgr001"
+ 
+$region = "North Europe"
+ 
+$clientpool = "192.168.10.0/24"
+ 
+$RootCertName = "CertificateName.cer"
+
+$Gwname = "GW1"
+ 
+$publicCertData = "MIIDBTCCAfGgAwIBAgIQNthurv0JxZBNDtmo320hDTAJBgUrDgMCHQUAMBoxGDAWBgNVBAMTD0NlcnRpZmljYXRlTmFtZTAeFw0xNjA4MjIxMjU1MTVaFw0zOTEyMzEyMzU5NTlaMBoxGDAWBgNVBAMTD0NlcnRpZmljYXRlTmFtZTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKE8+4qD48jUk+lLt5FtwlOcMebS1Qti5nLiJNRyz2J+jOpMtBBHmmiYvL8zdsTrwE7kfXsPh45sApbXPW1ZFnHi3kaVPN80tygo6c++A8Jm6dwkapSBigdMG4RcuDvj5xivOxSwtpNsXrzI2veOqFJ91FogKT6lKGs55hPLu+oVcvWjKEfcIadMpIghPRB6Y6enU5zNiCHeuSjQr4RK9dTlGnjuo9qQovD7emlmmACU5k7ji9XefYVFrbjJdDevnlkA4/hJvDA7SovwuYP36hYfAkieZPwsdDrMM+dNMU1I3ukQx2oa7GgilOwHrF0BL3Rb/Vr8xMVxo7cX7fKuE3sCAwEAAaNPME0wSwYDVR0BBEQwQoAQcGTFOcfw7DYWYQ3JWoxR56EcMBoxGDAWBgNVBAMTD0NlcnRpZmljYXRlTmFtZYIQNthurv0JxZBNDtmo320hDTAJBgUrDgMCHQUAA4IBAQCBmfxd1GJgIDRxxTvwRqeTu8JiEVoH1s57r7i4YTWl8XyrtRjvMqchu3/WvJmrYvVpky+zkYQEAw3ciciTuxLwqpZU2Zq+mduk7J9GZly+FoBx0WqG9k+kF2F3I5Ct63uLYovcjd6Wc5oAlKq/SW2PhX1rPQAJUFzMCKTP+BQdn5QImKf14ytMLR59JaH0/gR5v2M53b5JXaQZ9nM5eahduOWmwQeT7MjafPq2eZ+Ld03dNSIGDL5wzXExY85SeB0GSLRrKOsbtYjJ03EgxzMjnj2OBwG9GHRPwBzp0rJhpI+5z+na6JA1/FCWFL26VT2RUFNN8iAA
+FAOyAxKP0ISw"
+ 
+# Login to Azure RM
+ 
+Login-AzureRMAccount
+
+# Select Scubscription
+
+Select-AzureRmSubscription -SubscriptionName "Name of subscription"
+
+# Get the Virtual Network
+ 
+$vnet = Get-AzureRmVirtualNetwork -Name $vnetname -ResourceGroupName $rgname
+ 
+# Create IP for the gateway
+ 
+$GWIP = New-AzureRmPublicIpAddress -AllocationMethod Dynamic -ResourceGroupName $rgname -Location $region -Name GWIP1
+ 
+# Get the gateway subnet
+ 
+$GWSubnet = Get-AzureRmVirtualNetworkSubnetConfig -Name GatewaySubnet -VirtualNetwork $vnet
+ 
+# Create GW Config
+ 
+$GWIPConfig = New-AzureRmVirtualNetworkGatewayIpConfig -Name GWIPConfig -SubnetId $gwsubnet.Id -PublicIpAddressId $GWIP.Id
+ 
+# Create Gateway
+ 
+$gw = New-AzureRmVirtualNetworkGateway -Location $region -Name GW1 -ResourceGroupName $rgname -GatewayType Vpn -IpConfigurations $GWIPConfig -VpnType RouteBased
+ 
+# Create client VPN config
+ 
+Set-AzureRmVirtualNetworkGatewayVpnClientConfig -VirtualNetworkGateway $gw -VpnClientAddressPool $clientpool
+ 
+# Create Root Cert
+ 
+$rootCert = Add-AzureRmVpnClientRootCertificate -VpnClientRootCertificateName $RootCertName -PublicCertData $publicCertData -VirtualNetworkGatewayName $gw.Name -ResourceGroupName $rgname
+ 
+# Get URL for VPN client - download the exe from here
+ 
+$packageUrl = Get-AzureRmVpnClientPackage -ResourceGroupName $rgname -VirtualNetworkGatewayName $GWName -ProcessorArchitecture amd64
