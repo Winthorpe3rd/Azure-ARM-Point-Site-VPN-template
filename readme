@@ -1,0 +1,17 @@
+The attached script will help you in deploying an Azure ARM P2S VPN 
+
+Gateway Subnet
+
+The Virtual Network Gateway must connect to a subnet named GatewaySubnet. I created this using the portal. Yes, I know I could do this in PowerShell, but I often use the portal for a quick fix.
+
+Certificates
+
+Certificates are used to authenticate clients. You must have a root certificate and client certificate(s) that have been created using the root certificate. The root certificate is uploaded to Azure and the client certificate imported into the installed in the User’s personal store on the client machine.
+
+The documentation that exists for creating a P2S VPN connection to a service manager virtual network details how to create these using makecert – https://azure.microsoft.com/en-us/documentation/articles/vpn-gateway-point-to-site-create/. This is the method I used, although if you have an Enterprise Certification Authority it would make sense to use that.
+
+To upload the root certificate to Azure it must be exported in Base64 format:
+
+The PowerShell
+
+The PowerShell I used to create the gateways and P2S connection is attached. Note it can take over 20 minutes for the gateway to successfully create. Be patient! At the end of the script the URL to download the VPN client is stored in the variable $packageUrl
